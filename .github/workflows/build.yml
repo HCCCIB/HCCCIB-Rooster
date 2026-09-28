@@ -1,0 +1,38 @@
+name: Rooster bijwerken
+
+on:
+  push:
+    paths:
+      - 'content/**.xlsx'   # Trigger alleen als er een Excel geüpload wordt
+  workflow_dispatch:         # Handmatig starten via GitHub interface
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write        # Zodat de action kan committen
+
+    steps:
+      - name: Repository ophalen
+        uses: actions/checkout@v4
+
+      - name: Python installen
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Dependencies installen
+        run: pip install openpyxl
+
+      - name: index.html bouwen vanuit Excel
+        run: python scripts/build.py
+
+      - name: Wijzigingen committen en pushen
+        run: |
+          git config user.name  "HCCC Rooster Bot"
+          git config user.email "rooster-bot@hcccib.github.io"
+          git add index.html
+          # Alleen committen als er iets gewijzigd is
+          git diff --staged --quiet || git commit -m "Rooster bijgewerkt $(date +'%Y-%m-%d %H:%M')"
+          git push
